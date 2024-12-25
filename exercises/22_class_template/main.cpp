@@ -10,6 +10,10 @@ struct Tensor4D {
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
+        for (unsigned int i = 0; i < 4; ++i) {
+            shape[i] = shape_[i];
+            size *= shape[i];
+        }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -28,9 +32,35 @@ struct Tensor4D {
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
         // TODO: 实现单向广播的加法
+        // 4D矩阵直接暴力叠for循环即可
+        for(int l1 = 0; l1 < shape[0]; l1++){
+            for(int l2 = 0; l2 < shape[1]; l2++){
+                for(int l3 = 0; l3 < shape[2]; l3++){
+                    for(int l4 = 0; l4 < shape[3]; l4++){
+                        data[
+                            l1 * shape[1] * shape[2] * shape[3] +
+                            l2 * shape[2] * shape[3] +
+                            l3 * shape[3] +
+                            l4
+                            ] +=
+                        others.data[
+                            (others.shape[0] == 1 ? 0 : l1) * others.shape[1] * others.shape[2] * others.shape[3] +
+                            (others.shape[1] == 1 ? 0 : l2) * others.shape[2] * others.shape[3] +
+                            (others.shape[2] == 1 ? 0 : l3) * others.shape[3] +
+                            (others.shape[3] == 1 ? 0 : l4)
+                            ];
+                    }
+                }
+            }
+        }
         return *this;
     }
 };
+
+// 添加构造函数推导指南
+template<class T>
+Tensor4D(unsigned int const shape[4], T const *data) -> Tensor4D<T>;
+
 
 // ---- 不要修改以下代码 ----
 int main(int argc, char **argv) {
